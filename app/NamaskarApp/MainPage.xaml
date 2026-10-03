@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              xmlns:plugin="clr-namespace:Plugin.Maui.Calendar.Controls;assembly=Plugin.Maui.Calendar"
              xmlns:interfaces="clr-namespace:Plugin.Maui.Calendar.Interfaces;assembly=Plugin.Maui.Calendar"
+             xmlns:vm="clr-namespace:NamaskarApp.ViewModels"
+             xmlns:models="clr-namespace:NamaskarApp.Models"
+             xmlns:converters="clr-namespace:NamaskarApp.Converters"
              x:Class="NamaskarApp.MainPage"
+             x:DataType="vm:CalendarViewModel"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{AppThemeBinding Light={StaticResource PageLight}, Dark={StaticResource PageDark}}">
 
     <ContentPage.Resources>
-        <!-- Palette: Nepal flag blue for the shown month and selection, rhododendron crimson for Saturday,
-             the Nepali weekend (printed red on wall patros). -->
+        <!-- Palette: Nepal flag blue for the shown month and selection, rhododendron crimson for Saturdays and
+             public holidays (printed red on wall patros). -->
         <Color x:Key="PageLight">#F3F5F9</Color>
         <Color x:Key="PageDark">#0E1420</Color>
         <Color x:Key="PaperLight">#FFFFFF</Color>
@@ -23,8 +26,12 @@
         <Color x:Key="FlagBlueDark">#7FA6F0</Color>
         <Color x:Key="CrimsonLight">#C8102E</Color>
         <Color x:Key="CrimsonDark">#FF6B7F</Color>
+        <Color x:Key="CrimsonTintLight">#FBE7EA</Color>
+        <Color x:Key="CrimsonTintDark">#3A1E26</Color>
         <Color x:Key="TodayLight">#E6ECF7</Color>
         <Color x:Key="TodayDark">#243352</Color>
+
+        <converters:RedDayConverter x:Key="RedDayConverter" />
 
         <Style x:Key="WeekdayTitleStyle" TargetType="Label">
             <Setter Property="FontSize" Value="13" />
@@ -41,34 +48,47 @@
             <Setter Property="Padding" Value="12,0" />
             <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}" />
         </Style>
+
+        <Style x:Key="SectionTitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="FontFamily" Value="OpenSansSemibold" />
+            <Setter Property="Margin" Value="0,8,0,4" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}" />
+        </Style>
+
+        <Style x:Key="BodyLabelStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="LineHeight" Value="1.2" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}" />
+        </Style>
     </ContentPage.Resources>
 
     <ScrollView>
-        <VerticalStackLayout Padding="16,24,16,24" Spacing="16">
+        <VerticalStackLayout Padding="16,24,16,32" Spacing="16">
 
             <!-- Header: BS month and year, with the AD months it spans -->
-            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="0">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
                 <VerticalStackLayout VerticalOptions="Center">
                     <Label FontSize="30" FontFamily="OpenSansSemibold" LineBreakMode="NoWrap">
                         <Label.FormattedText>
                             <FormattedString>
-                                <Span x:Name="MonthSpan"
+                                <Span Text="{Binding MonthName}"
                                       TextColor="{AppThemeBinding Light={StaticResource FlagBlueLight}, Dark={StaticResource FlagBlueDark}}" />
                                 <Span Text=" " />
-                                <Span x:Name="YearSpan"
+                                <Span Text="{Binding Year}"
                                       FontFamily="OpenSansRegular"
                                       TextColor="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}" />
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>
-                    <Label x:Name="EnglishSpanLabel"
+                    <Label Text="{Binding EnglishMonthSpan}"
                            FontSize="14"
                            TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
                 </VerticalStackLayout>
 
                 <Button Grid.Column="1"
                         Text="Today"
-                        Clicked="OnTodayClicked"
+                        Command="{Binding GoToTodayCommand}"
                         FontSize="14"
                         FontFamily="OpenSansSemibold"
                         Padding="14,0"
@@ -80,12 +100,12 @@
                         SemanticProperties.Hint="Shows the current month and selects today" />
                 <Button Grid.Column="2"
                         Text="‹"
-                        Command="{Binding Source={x:Reference NepaliCalendar}, Path=PrevLayoutUnitCommand}"
+                        Command="{Binding PrevLayoutUnitCommand, Source={x:Reference NepaliCalendar}, x:DataType=plugin:Calendar}"
                         Style="{StaticResource ChevronButtonStyle}"
                         SemanticProperties.Description="Previous month" />
                 <Button Grid.Column="3"
                         Text="›"
-                        Command="{Binding Source={x:Reference NepaliCalendar}, Path=NextLayoutUnitCommand}"
+                        Command="{Binding NextLayoutUnitCommand, Source={x:Reference NepaliCalendar}, x:DataType=plugin:Calendar}"
                         Style="{StaticResource ChevronButtonStyle}"
                         SemanticProperties.Description="Next month" />
             </Grid>
@@ -96,6 +116,9 @@
                     StrokeShape="RoundRectangle 20"
                     BackgroundColor="{AppThemeBinding Light={StaticResource PaperLight}, Dark={StaticResource PaperDark}}">
                 <plugin:Calendar x:Name="NepaliCalendar"
+                                 CalendarSystem="{Binding CalendarSystem}"
+                                 ShownDate="{Binding ShownDate, Mode=TwoWay}"
+                                 SelectedDate="{Binding SelectedDate, Mode=TwoWay}"
                                  FirstDayOfWeek="Sunday"
                                  HeaderSectionVisible="False"
                                  FooterSectionVisible="False"
@@ -106,16 +129,13 @@
                                  DaysTitleLabelStyle="{StaticResource WeekdayTitleStyle}"
                                  WeekendTitleStyle="{StaticResource WeekdayTitleStyle}"
                                  DayViewSize="46"
-                                 DayViewHeight="56"
-                                 ShownDatesChanged="OnShownDatesChanged"
-                                 PropertyChanged="OnCalendarPropertyChanged">
+                                 DayViewHeight="56">
                     <plugin:Calendar.DayViewTemplate>
-                        <!-- Wall-patro cell: large BS day, small AD day in the corner -->
+                        <!-- Wall-patro cell: large BS day, small AD day in the corner.
+                             Cells are reused across months, so each property is driven by one trigger or binding
+                             only: MAUI restores the wrong value when two triggers set the same property and turn
+                             off in a different order. That is why the selected day number is a separate label. -->
                         <DataTemplate x:DataType="interfaces:ICalendarDay">
-                            <!-- Cells are reused across months, so each property is driven by one trigger or
-                                 binding only: MAUI restores the wrong value when two triggers set the same
-                                 property and turn off in a different order. Saturday red and selection white
-                                 share TextColor safely because a cell's weekday column never changes. -->
                             <Grid Margin="2">
                                 <Grid.Triggers>
                                     <DataTrigger TargetType="Grid" Binding="{Binding IsThisMonth}" Value="False">
@@ -148,6 +168,7 @@
                                             </DataTrigger>
                                         </Label.Triggers>
                                     </Label>
+                                    <!-- Unselected day number: crimson on Saturdays and public holidays -->
                                     <Label Text="{Binding Day}"
                                            FontSize="21"
                                            FontFamily="OpenSansSemibold"
@@ -156,15 +177,23 @@
                                            VerticalOptions="Center"
                                            TextColor="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}">
                                         <Label.Triggers>
-                                            <!-- later triggers win: selection overrides the Saturday red -->
-                                            <DataTrigger TargetType="Label" Binding="{Binding Date.DayOfWeek}" Value="{x:Static sys:DayOfWeek.Saturday}">
+                                            <DataTrigger TargetType="Label" Binding="{Binding Date, Converter={StaticResource RedDayConverter}}" Value="True">
                                                 <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource CrimsonLight}, Dark={StaticResource CrimsonDark}}" />
                                             </DataTrigger>
                                             <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="TextColor" Value="White" />
+                                                <Setter Property="IsVisible" Value="False" />
                                             </DataTrigger>
                                         </Label.Triggers>
                                     </Label>
+                                    <!-- Selected day number -->
+                                    <Label Text="{Binding Day}"
+                                           IsVisible="{Binding IsSelected}"
+                                           FontSize="21"
+                                           FontFamily="OpenSansSemibold"
+                                           Margin="0,6,0,0"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"
+                                           TextColor="White" />
                                 </Grid>
                             </Grid>
                         </DataTemplate>
@@ -173,15 +202,88 @@
             </Border>
 
             <!-- Selected day -->
-            <VerticalStackLayout Padding="4,0" Spacing="2">
-                <Label x:Name="SelectedNepaliLabel"
-                       FontSize="20"
-                       FontFamily="OpenSansSemibold"
-                       TextColor="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}" />
-                <Label x:Name="SelectedEnglishLabel"
-                       FontSize="15"
-                       TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+            <VerticalStackLayout Padding="4,0" Spacing="6">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="{Binding SelectedNepaliDate}"
+                           FontSize="20"
+                           FontFamily="OpenSansSemibold"
+                           TextColor="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}" />
+                    <Label Text="{Binding SelectedEnglishDate}"
+                           FontSize="15"
+                           TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                </VerticalStackLayout>
+
+                <HorizontalStackLayout Spacing="8">
+                    <Border Padding="10,4"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12"
+                            IsVisible="{Binding SelectedTithi, Converter={x:Static converters:StringHasTextConverter.Instance}}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource TodayLight}, Dark={StaticResource TodayDark}}">
+                        <Label FontSize="13"
+                               TextColor="{AppThemeBinding Light={StaticResource FlagBlueLight}, Dark={StaticResource FlagBlueDark}}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="{Binding SelectedTithi}" FontFamily="OpenSansSemibold" />
+                                    <Span Text=" tithi" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </Border>
+                    <Border Padding="10,4"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12"
+                            IsVisible="{Binding IsSelectedDayHoliday}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource CrimsonTintLight}, Dark={StaticResource CrimsonTintDark}}">
+                        <Label Text="Public holiday"
+                               FontSize="13"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="{AppThemeBinding Light={StaticResource CrimsonLight}, Dark={StaticResource CrimsonDark}}" />
+                    </Border>
+                </HorizontalStackLayout>
+
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding SelectedDayEvents}" Spacing="4">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Label Text="{Binding .}" Style="{StaticResource BodyLabelStyle}" />
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
             </VerticalStackLayout>
+
+            <!-- Holidays of the shown month, as printed at the foot of a wall patro -->
+            <Border Padding="16,12,16,16"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 20"
+                    IsVisible="{Binding HasMonthHolidays}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource PaperLight}, Dark={StaticResource PaperDark}}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Style="{StaticResource SectionTitleStyle}">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Holidays in " />
+                                <Span Text="{Binding MonthName}" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding MonthHolidays}" Spacing="10">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:MonthHoliday">
+                                <Grid ColumnDefinitions="28,*" ColumnSpacing="8">
+                                    <Label Text="{Binding Day}"
+                                           FontSize="17"
+                                           FontFamily="OpenSansSemibold"
+                                           TextColor="{AppThemeBinding Light={StaticResource CrimsonLight}, Dark={StaticResource CrimsonDark}}" />
+                                    <Label Grid.Column="1"
+                                           Text="{Binding Names}"
+                                           Style="{StaticResource BodyLabelStyle}"
+                                           MaxLines="2"
+                                           LineBreakMode="TailTruncation" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
 
         </VerticalStackLayout>
     </ScrollView>
