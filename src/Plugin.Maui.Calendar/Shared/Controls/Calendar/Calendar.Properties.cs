@@ -35,5 +35,5 @@ public partial class Calendar : ContentView, IDisposable
 	/// </summary>
 	public ICommand ShowHideCalendarCommand { get; }
 
-	public string LocalizedYear => UseNativeDigits ? ShownDate.Year.ToNativeDigitString(Culture) : ShownDate.Year.ToString(Culture);
+	public string LocalizedYear => UseNativeDigits ? ShownYear.ToNativeDigitString(Culture) : ShownYear.ToString(Culture);
 }

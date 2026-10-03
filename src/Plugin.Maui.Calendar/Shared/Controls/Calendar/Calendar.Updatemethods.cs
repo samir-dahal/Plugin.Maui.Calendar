@@ -28,7 +28,7 @@ public partial class Calendar : ContentView, IDisposable
 			return;
 		}
 
-		LayoutUnitText = Culture.DateTimeFormat.MonthNames[ShownDate.Month - 1].Capitalize();
+		LayoutUnitText = GetShownMonthName().Capitalize();
 	}
 
 	void UpdateSelectedDateLabel() => SelectedDateText = CurrentSelectionEngine.GetSelectedDateText(SelectedDateTextFormat, Culture, UseNativeDigits);
@@ -89,10 +89,10 @@ public partial class Calendar : ContentView, IDisposable
 	{
 		if (AutoChangeMonthOnDayTap)
 		{
-			if (value.Month != ShownDate.Month || value.Year != ShownDate.Year)
+			if (!IsInShownMonth(value))
 			{
-				var oldMonth = new DateOnly(ShownDate.Year, ShownDate.Month, 1);
-				var newMonth = new DateOnly(value.Year, value.Month, 1);
+				var oldMonth = GetMonthStart(ShownDate);
+				var newMonth = GetMonthStart(value);
 
 				ShownDate = value;
 
@@ -193,7 +193,7 @@ public partial class Calendar : ContentView, IDisposable
 			{
 				var currentDate = firstDate.AddDays(addDays++);
 
-				if (currentDate.Month == ShownDate.Month)
+				if (IsInShownMonth(currentDate))
 				{
 					lastDayOfMonth = addDays;
 				}
@@ -207,14 +207,14 @@ public partial class Calendar : ContentView, IDisposable
 				// A cell that keeps its date (e.g. the same month re-rendered after midnight)
 				// skips OnDateChanged, so IsToday is re-evaluated explicitly on every pass.
 				dayModel.RefreshIsToday(today);
-				dayModel.Day = UseNativeDigits ? currentDate.Day.ToNativeDigitString(Culture) : currentDate.Day.ToString(Culture);
-				dayModel.IsThisMonth = CalendarLayout != WeekLayout.Month || currentDate.Month == ShownDate.Month;
+				dayModel.Day = UseNativeDigits ? GetDayOfMonth(currentDate).ToNativeDigitString(Culture) : GetDayOfMonth(currentDate).ToString(Culture);
+				dayModel.IsThisMonth = CalendarLayout != WeekLayout.Month || IsInShownMonth(currentDate);
 				dayModel.OtherMonthIsVisible = CalendarLayout != WeekLayout.Month || OtherMonthDayIsVisible;
 				dayModel.OtherMonthWeekIsVisible = CalendarLayout != WeekLayout.Month || OtherMonthWeekIsVisible || (OtherMonthDayIsVisible && currentMonthOnLine);
 				dayModel.HasEvents = Events.ContainsKey(currentDate);
 				// Normalise to date-only so a non-midnight MinimumDate/MaximumDate
 				// (e.g. DateTime.Now.AddDays(-7)) does not incorrectly disable the boundary day.
-				dayModel.IsDisabled = IsDateDisabled(currentDate, MinimumDate, MaximumDate, disabledSet);
+				dayModel.IsDisabled = IsDateDisabled(currentDate, EffectiveMinimumDate, EffectiveMaximumDate, disabledSet);
 				dayModel.IsSelected = CurrentSelectionEngine.IsDateSelected(dayModel.Date);
 				AssignIndicatorColors(ref dayModel);
 			}

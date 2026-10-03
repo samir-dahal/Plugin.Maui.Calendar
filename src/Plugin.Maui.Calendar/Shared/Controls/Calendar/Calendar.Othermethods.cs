@@ -52,11 +52,16 @@ public partial class Calendar : ContentView, IDisposable
 
 	void NextYear(object obj)
 	{
-		ShownDate = ShownDate.AddYears(1);
+		ShownDate = AddYearsToShownDate(1);
 	}
 
 	bool CanExecuteNextYear(object obj)
 	{
+		if (CalendarSystem is not null)
+		{
+			return CanMoveShownYear(1);
+		}
+
 		try
 		{
 			var maxDate = Culture.Calendar.MaxSupportedDateTime;
@@ -70,11 +75,16 @@ public partial class Calendar : ContentView, IDisposable
 
 	void PrevYear(object obj)
 	{
-		ShownDate = ShownDate.AddYears(-1);
+		ShownDate = AddYearsToShownDate(-1);
 	}
 
 	bool CanExecutePrevYear(object obj)
 	{
+		if (CalendarSystem is not null)
+		{
+			return CanMoveShownYear(-1);
+		}
+
 		try
 		{
 			var minDate = Culture.Calendar.MinSupportedDateTime;
@@ -149,7 +159,7 @@ public partial class Calendar : ContentView, IDisposable
 		{
 			WeekLayout.Week => new WeekViewEngine(1, FirstDayOfWeek),
 			WeekLayout.TwoWeek => new WeekViewEngine(2, FirstDayOfWeek),
-			_ => new MonthViewEngine(FirstDayOfWeek),
+			_ => CreateMonthViewEngine(),
 		};
 
 		daysControl.Children.Clear();
