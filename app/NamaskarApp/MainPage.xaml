@@ -320,7 +320,7 @@
         </VerticalStackLayout>
     </ScrollView>
 
-        <!-- Welcome: today at a glance on the clean photo; tap or swipe up to open the calendar -->
+        <!-- Welcome: today at a glance on the clean photo; tap or drag up to open the calendar -->
         <Grid x:Name="WelcomeLayer"
               x:DataType="vm:WelcomeViewModel"
               BindingContext="{Binding Welcome, x:DataType=vm:CalendarViewModel}"
@@ -328,7 +328,8 @@
               Padding="24,48,24,28">
             <Grid.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding OpenCalendarCommand}" />
-                <SwipeGestureRecognizer Direction="Up" Command="{Binding OpenCalendarCommand}" />
+                <!-- Drag up: the layer follows the finger (MainPage.OnWelcomePanUpdated) -->
+                <PanGestureRecognizer PanUpdated="OnWelcomePanUpdated" />
             </Grid.GestureRecognizers>
 
             <VerticalStackLayout Spacing="4">
