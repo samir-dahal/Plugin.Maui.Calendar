@@ -23,4 +23,20 @@ public class NepaliEventNamesTests
 	{
 		NepaliEventNames.IsInternationalObservance(name).Should().BeFalse();
 	}
+
+	[Fact]
+	public void WithoutInternationalObservances_ShouldKeepOnlyNepaliEvents()
+	{
+		string[] events = ["Fulpati", "Dashain Holiday", "International Day for the Eradication of Poverty"];
+
+		NepaliEventNames.WithoutInternationalObservances(events).Should().Equal("Fulpati", "Dashain Holiday");
+	}
+
+	[Fact]
+	public void WithoutInternationalObservances_ShouldKeepAll_WhenAllAreInternational()
+	{
+		string[] events = ["World Heart Day"];
+
+		NepaliEventNames.WithoutInternationalObservances(events).Should().Equal("World Heart Day");
+	}
 }

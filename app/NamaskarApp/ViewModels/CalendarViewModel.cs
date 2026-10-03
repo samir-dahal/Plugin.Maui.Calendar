@@ -13,17 +13,25 @@ public partial class CalendarViewModel : ObservableObject
 	readonly DailyBackgroundService backgroundService;
 	readonly IBrowser browser;
 
-	public CalendarViewModel(NepaliCalendarSystem calendarSystem, DailyBackgroundService backgroundService, IBrowser browser)
+	public CalendarViewModel(
+		NepaliCalendarSystem calendarSystem,
+		DailyBackgroundService backgroundService,
+		IBrowser browser,
+		WelcomeViewModel welcome)
 	{
 		this.calendarSystem = calendarSystem;
 		this.backgroundService = backgroundService;
 		this.browser = browser;
+		Welcome = welcome;
 		UpdateMonth();
 		UpdateSelectedDay();
 		Background = backgroundService.GetCached();
 	}
 
 	public ICalendarSystem CalendarSystem => calendarSystem;
+
+	/// <summary>The today screen shown over the calendar when the app starts.</summary>
+	public WelcomeViewModel Welcome { get; }
 
 	/// <summary>Today's background photo, or <see langword="null"/> for the plain flag-blue background.</summary>
 	[ObservableProperty]
@@ -132,8 +140,8 @@ public partial class CalendarViewModel : ObservableObject
 			var info = NepaliDayInfo.For(date);
 			if (info.IsPublicHoliday)
 			{
-				var names = info.Events.Where(name => !NepaliEventNames.IsInternationalObservance(name)).ToList();
-				holidays.Add(new MonthHoliday(calendarSystem.GetDayOfMonth(date), string.Join(", ", names.Count > 0 ? names : info.Events)));
+				var names = NepaliEventNames.WithoutInternationalObservances(info.Events);
+				holidays.Add(new MonthHoliday(calendarSystem.GetDayOfMonth(date), string.Join(", ", names)));
 			}
 		}
 		return holidays;

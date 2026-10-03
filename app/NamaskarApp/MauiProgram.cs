@@ -27,6 +27,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton(sp => new DailyBackgroundService(
 			new HttpClient { BaseAddress = new Uri(DailyApiBaseAddress), Timeout = TimeSpan.FromSeconds(15) },
 			sp.GetRequiredService<IPreferences>()));
+		builder.Services.AddTransient<WelcomeViewModel>();
 		builder.Services.AddTransient<CalendarViewModel>();
 		builder.Services.AddTransient<MainPage>();
 

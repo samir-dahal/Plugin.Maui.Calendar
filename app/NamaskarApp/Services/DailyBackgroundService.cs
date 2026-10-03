@@ -12,6 +12,9 @@ public sealed class DailyBackgroundService(HttpClient httpClient, IPreferences p
 {
 	const string CacheKey = "daily_background";
 
+	// Width of the blurred copy: small enough to look soft when stretched, large enough to avoid blocks.
+	const int BlurImageWidthPx = 100;
+
 	static readonly JsonSerializerOptions jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 
 	public DailyBackground? GetCached()
@@ -39,17 +42,18 @@ public sealed class DailyBackgroundService(HttpClient httpClient, IPreferences p
 		}
 
 		var dailyBackground = new DailyBackground(
-			SizeForScreen(background.Url, screenWidthPx),
+			Resize(background.Url, Math.Clamp(screenWidthPx, 720, 1600)),
 			background.Photographer ?? string.Empty,
 			background.Source ?? string.Empty,
-			background.SourceUrl ?? string.Empty);
+			background.SourceUrl ?? string.Empty,
+			Resize(background.Url, BlurImageWidthPx));
 
 		preferences.Set(CacheKey, JsonSerializer.Serialize(dailyBackground));
 		return dailyBackground;
 	}
 
 	// The API returns the original photo (~850 KB). Pexels resizes on request (~50 KB at 1080 px wide).
-	static string SizeForScreen(string url, int screenWidthPx)
+	static string Resize(string url, int widthPx)
 	{
 		if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
 			|| uri.Host != "images.pexels.com"
@@ -58,7 +62,7 @@ public sealed class DailyBackgroundService(HttpClient httpClient, IPreferences p
 			return url;
 		}
 
-		return $"{url}?auto=compress&cs=tinysrgb&w={Math.Clamp(screenWidthPx, 720, 1600)}";
+		return $"{url}?auto=compress&cs=tinysrgb&w={widthPx}";
 	}
 
 	sealed record DailyResponse(BackgroundDto? Background);

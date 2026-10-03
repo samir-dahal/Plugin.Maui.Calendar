@@ -20,20 +20,18 @@
         <Color x:Key="OnPhoto">#FFFFFF</Color>
         <Color x:Key="OnPhotoMuted">#D9FFFFFF</Color>
         <Color x:Key="OnPhotoChip">#33FFFFFF</Color>
-        <Color x:Key="PaperLight">#FFFFFF</Color>
-        <Color x:Key="PaperDark">#18202F</Color>
-        <Color x:Key="InkLight">#1A2233</Color>
-        <Color x:Key="InkDark">#E8ECF4</Color>
-        <Color x:Key="MutedLight">#8A93A6</Color>
-        <Color x:Key="MutedDark">#7C869B</Color>
-        <Color x:Key="FlagBlueLight">#003893</Color>
-        <Color x:Key="FlagBlueDark">#7FA6F0</Color>
-        <Color x:Key="CrimsonLight">#C8102E</Color>
-        <Color x:Key="CrimsonDark">#FF6B7F</Color>
-        <Color x:Key="CrimsonTintLight">#FBE7EA</Color>
-        <Color x:Key="CrimsonTintDark">#3A1E26</Color>
-        <Color x:Key="TodayLight">#E6ECF7</Color>
-        <Color x:Key="TodayDark">#243352</Color>
+        <!-- Dark frosted glass (the Namaskar extension's container): a dark tint over the blurred photo with a
+             faint light edge. Content on it is light; the same in light and dark theme. -->
+        <Color x:Key="GlassFill">#73101418</Color>
+        <Color x:Key="GlassStroke">#2EFFFFFF</Color>
+        <Color x:Key="OnGlass">#FFFFFF</Color>
+        <Color x:Key="OnGlassMuted">#A6FFFFFF</Color>
+        <Color x:Key="TodayOnGlass">#33FFFFFF</Color>
+        <Color x:Key="SelectedOnGlass">#2D5BD3</Color>
+        <Color x:Key="RedOnGlass">#FF6B7F</Color>
+        <Color x:Key="HolidayChipOnGlass">#4DC8102E</Color>
+        <Color x:Key="FlagBlue">#003893</Color>
+        <Color x:Key="Crimson">#C8102E</Color>
 
         <converters:RedDayConverter x:Key="RedDayConverter" />
 
@@ -42,7 +40,7 @@
             <Setter Property="FontFamily" Value="OpenSansSemibold" />
             <Setter Property="HorizontalTextAlignment" Value="Center" />
             <Setter Property="Margin" Value="0,0,0,6" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+            <Setter Property="TextColor" Value="{StaticResource OnGlassMuted}" />
         </Style>
 
         <Style x:Key="ChevronButtonStyle" TargetType="Button">
@@ -57,19 +55,21 @@
             <Setter Property="FontSize" Value="17" />
             <Setter Property="FontFamily" Value="OpenSansSemibold" />
             <Setter Property="Margin" Value="0,8,0,4" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}" />
+            <Setter Property="TextColor" Value="{StaticResource OnGlass}" />
         </Style>
 
         <Style x:Key="BodyLabelStyle" TargetType="Label">
             <Setter Property="FontSize" Value="15" />
             <Setter Property="LineHeight" Value="1.2" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}" />
+            <Setter Property="TextColor" Value="{StaticResource OnGlass}" />
         </Style>
     </ContentPage.Resources>
 
     <Grid>
-        <!-- Daily photo as a skin: it never sits directly behind dates, which stay on opaque cards -->
+        <!-- Daily photo as a skin: sharp on the welcome screen, blurred behind the calendar's frosted cards.
+             The blur is a tiny copy of the photo stretched over the screen, so it costs nothing to render. -->
         <Image Source="{Binding Background.ImageUrl}" Aspect="AspectFill" />
+        <Image x:Name="BlurredPhoto" Source="{Binding Background.BlurImageUrl}" Aspect="AspectFill" Opacity="0" />
         <BoxView>
             <BoxView.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -80,7 +80,7 @@
             </BoxView.Background>
         </BoxView>
 
-    <ScrollView>
+    <ScrollView x:Name="CalendarContent" IsVisible="False" Opacity="0">
         <VerticalStackLayout Padding="16,24,16,32" Spacing="16">
 
             <!-- Header: BS month and year, with the AD months it spans -->
@@ -124,9 +124,10 @@
 
             <!-- Month grid -->
             <Border Padding="8,14,8,10"
-                    StrokeThickness="0"
+                    Stroke="{StaticResource GlassStroke}"
+                    StrokeThickness="1"
                     StrokeShape="RoundRectangle 20"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource PaperLight}, Dark={StaticResource PaperDark}}">
+                    BackgroundColor="{StaticResource GlassFill}">
                 <plugin:Calendar x:Name="NepaliCalendar"
                                  CalendarSystem="{Binding CalendarSystem}"
                                  ShownDate="{Binding ShownDate, Mode=TwoWay}"
@@ -157,11 +158,11 @@
                                 <Border StrokeThickness="0"
                                         StrokeShape="RoundRectangle 12"
                                         IsVisible="{Binding IsToday}"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource TodayLight}, Dark={StaticResource TodayDark}}" />
+                                        BackgroundColor="{StaticResource TodayOnGlass}" />
                                 <Border StrokeThickness="0"
                                         StrokeShape="RoundRectangle 12"
                                         IsVisible="{Binding IsSelected}"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource FlagBlueLight}, Dark={StaticResource FlagBlueDark}}" />
+                                        BackgroundColor="{StaticResource SelectedOnGlass}" />
                                 <Grid>
                                     <Grid.Triggers>
                                         <DataTrigger TargetType="Grid" Binding="{Binding IsDisabled}" Value="True">
@@ -173,7 +174,7 @@
                                            Margin="0,3,5,0"
                                            HorizontalOptions="End"
                                            VerticalOptions="Start"
-                                           TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}">
+                                           TextColor="{StaticResource OnGlassMuted}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
                                                 <Setter Property="TextColor" Value="#C9D6F2" />
@@ -187,10 +188,10 @@
                                            Margin="0,6,0,0"
                                            HorizontalOptions="Center"
                                            VerticalOptions="Center"
-                                           TextColor="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}">
+                                           TextColor="{StaticResource OnGlass}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding Date, Converter={StaticResource RedDayConverter}}" Value="True">
-                                                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource CrimsonLight}, Dark={StaticResource CrimsonDark}}" />
+                                                <Setter Property="TextColor" Value="{StaticResource RedOnGlass}" />
                                             </DataTrigger>
                                             <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
                                                 <Setter Property="IsVisible" Value="False" />
@@ -215,18 +216,19 @@
 
             <!-- Selected day -->
             <Border Padding="16,14,16,16"
-                    StrokeThickness="0"
+                    Stroke="{StaticResource GlassStroke}"
+                    StrokeThickness="1"
                     StrokeShape="RoundRectangle 20"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource PaperLight}, Dark={StaticResource PaperDark}}">
+                    BackgroundColor="{StaticResource GlassFill}">
             <VerticalStackLayout Spacing="6">
                 <VerticalStackLayout Spacing="2">
                     <Label Text="{Binding SelectedNepaliDate}"
                            FontSize="20"
                            FontFamily="OpenSansSemibold"
-                           TextColor="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}" />
+                           TextColor="{StaticResource OnGlass}" />
                     <Label Text="{Binding SelectedEnglishDate}"
                            FontSize="15"
-                           TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                           TextColor="{StaticResource OnGlassMuted}" />
                 </VerticalStackLayout>
 
                 <HorizontalStackLayout Spacing="8">
@@ -234,9 +236,9 @@
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 12"
                             IsVisible="{Binding SelectedTithi, Converter={x:Static converters:StringHasTextConverter.Instance}}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource TodayLight}, Dark={StaticResource TodayDark}}">
+                            BackgroundColor="{StaticResource TodayOnGlass}">
                         <Label FontSize="13"
-                               TextColor="{AppThemeBinding Light={StaticResource FlagBlueLight}, Dark={StaticResource FlagBlueDark}}">
+                               TextColor="{StaticResource OnGlass}">
                             <Label.FormattedText>
                                 <FormattedString>
                                     <Span Text="{Binding SelectedTithi}" FontFamily="OpenSansSemibold" />
@@ -249,11 +251,11 @@
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 12"
                             IsVisible="{Binding IsSelectedDayHoliday}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource CrimsonTintLight}, Dark={StaticResource CrimsonTintDark}}">
+                            BackgroundColor="{StaticResource HolidayChipOnGlass}">
                         <Label Text="Public holiday"
                                FontSize="13"
                                FontFamily="OpenSansSemibold"
-                               TextColor="{AppThemeBinding Light={StaticResource CrimsonLight}, Dark={StaticResource CrimsonDark}}" />
+                               TextColor="{StaticResource RedOnGlass}" />
                     </Border>
                 </HorizontalStackLayout>
 
@@ -269,10 +271,11 @@
 
             <!-- Holidays of the shown month, as printed at the foot of a wall patro -->
             <Border Padding="16,12,16,16"
-                    StrokeThickness="0"
+                    Stroke="{StaticResource GlassStroke}"
+                    StrokeThickness="1"
                     StrokeShape="RoundRectangle 20"
                     IsVisible="{Binding HasMonthHolidays}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource PaperLight}, Dark={StaticResource PaperDark}}">
+                    BackgroundColor="{StaticResource GlassFill}">
                 <VerticalStackLayout Spacing="10">
                     <Label Style="{StaticResource SectionTitleStyle}">
                         <Label.FormattedText>
@@ -289,7 +292,7 @@
                                     <Label Text="{Binding Day}"
                                            FontSize="17"
                                            FontFamily="OpenSansSemibold"
-                                           TextColor="{AppThemeBinding Light={StaticResource CrimsonLight}, Dark={StaticResource CrimsonDark}}" />
+                                           TextColor="{StaticResource RedOnGlass}" />
                                     <Label Grid.Column="1"
                                            Text="{Binding Names}"
                                            Style="{StaticResource BodyLabelStyle}"
@@ -316,6 +319,109 @@
 
         </VerticalStackLayout>
     </ScrollView>
+
+        <!-- Welcome: today at a glance on the clean photo; tap or swipe up to open the calendar -->
+        <Grid x:Name="WelcomeLayer"
+              x:DataType="vm:WelcomeViewModel"
+              BindingContext="{Binding Welcome, x:DataType=vm:CalendarViewModel}"
+              RowDefinitions="*,Auto"
+              Padding="24,48,24,28">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding OpenCalendarCommand}" />
+                <SwipeGestureRecognizer Direction="Up" Command="{Binding OpenCalendarCommand}" />
+            </Grid.GestureRecognizers>
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="{Binding Greeting}" FontSize="20" TextColor="{StaticResource OnPhotoMuted}" />
+                <Label Text="{Binding NepaliDate}"
+                       FontSize="58"
+                       FontFamily="OpenSansSemibold"
+                       Margin="0,8,0,0"
+                       TextColor="{StaticResource OnPhoto}" />
+                <Label Text="{Binding NepaliYear}" FontSize="30" TextColor="{StaticResource OnPhoto}" />
+                <Label Text="{Binding EnglishDate}"
+                       FontSize="16"
+                       Margin="0,10,0,0"
+                       TextColor="{StaticResource OnPhotoMuted}" />
+
+                <HorizontalStackLayout Spacing="8" Margin="0,16,0,0">
+                    <Border Padding="12,5"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 14"
+                            IsVisible="{Binding Tithi, Converter={x:Static converters:StringHasTextConverter.Instance}}"
+                            BackgroundColor="{StaticResource OnPhotoChip}">
+                        <Label FontSize="14" TextColor="{StaticResource OnPhoto}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="{Binding Tithi}" FontFamily="OpenSansSemibold" />
+                                    <Span Text=" tithi" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </Border>
+                    <Border Padding="12,5"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 14"
+                            IsVisible="{Binding IsHoliday}"
+                            BackgroundColor="{StaticResource Crimson}">
+                        <Label Text="Public holiday" FontSize="14" FontFamily="OpenSansSemibold" TextColor="{StaticResource OnPhoto}" />
+                    </Border>
+                </HorizontalStackLayout>
+                <Label Text="{Binding Highlights}"
+                       IsVisible="{Binding Highlights, Converter={x:Static converters:StringHasTextConverter.Instance}}"
+                       FontSize="17"
+                       Margin="0,8,0,0"
+                       TextColor="{StaticResource OnPhoto}" />
+
+                <!-- Asked once; the name stays on this phone -->
+                <Border IsVisible="{Binding IsNamePromptVisible}"
+                        Margin="0,24,0,0"
+                        Padding="16,14"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 20"
+                        BackgroundColor="#4D000000">
+                    <Border.GestureRecognizers>
+                        <!-- Keeps taps inside the card from opening the calendar -->
+                        <TapGestureRecognizer />
+                    </Border.GestureRecognizers>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="What should we call you?"
+                               FontSize="16"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="{StaticResource OnPhoto}" />
+                        <Entry Text="{Binding NameInput}"
+                               Placeholder="Your name"
+                               PlaceholderColor="#99FFFFFF"
+                               TextColor="{StaticResource OnPhoto}"
+                               ReturnType="Done"
+                               ReturnCommand="{Binding SaveNameCommand}" />
+                        <HorizontalStackLayout Spacing="8">
+                            <Button Text="Save name"
+                                    Command="{Binding SaveNameCommand}"
+                                    FontFamily="OpenSansSemibold"
+                                    HeightRequest="38"
+                                    Padding="16,0"
+                                    CornerRadius="19"
+                                    BackgroundColor="{StaticResource OnPhoto}"
+                                    TextColor="{StaticResource FlagBlue}" />
+                            <Button Text="Not now"
+                                    Command="{Binding SkipNameCommand}"
+                                    HeightRequest="38"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource OnPhoto}" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Row="1"
+                                 Spacing="0"
+                                 HorizontalOptions="Center"
+                                 SemanticProperties.Description="Open the calendar">
+                <Label Text="⌃" FontSize="26" HorizontalOptions="Center" TextColor="{StaticResource OnPhoto}" />
+                <Label Text="Swipe up or tap for the calendar" FontSize="14" TextColor="{StaticResource OnPhotoMuted}" />
+            </VerticalStackLayout>
+        </Grid>
     </Grid>
 
 </ContentPage>
