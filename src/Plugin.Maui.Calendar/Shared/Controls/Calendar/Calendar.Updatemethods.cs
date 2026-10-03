@@ -144,7 +144,7 @@ public partial class Calendar : ContentView, IDisposable
 			dayLabel.Text = titleText;
 
 			// Detect weekend days	
-			if (dayNumber == (int)DayOfWeek.Saturday || dayNumber == (int)DayOfWeek.Sunday)
+			if (IsWeekendDay((DayOfWeek)dayNumber))
 			{
 				dayLabel.Style = WeekendTitleStyle;
 			}
@@ -383,7 +383,7 @@ public partial class Calendar : ContentView, IDisposable
 		var bands = new List<Border>();
 		for (int col = 0; col < daysInWeek; col++)
 		{
-			if (!ViewLayoutEngines.ViewLayoutBase.IsWeekendColumn(FirstDayOfWeek, col))
+			if (!IsWeekendDay((DayOfWeek)(((int)FirstDayOfWeek + col) % daysInWeek)))
 			{
 				continue;
 			}
