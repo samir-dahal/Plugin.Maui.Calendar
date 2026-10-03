@@ -64,6 +64,13 @@ public sealed class NepaliCalendarSystem : ICalendarSystem
 
 	public string GetMonthName(DateTime date) => ToNepali(date).MonthName.ToString();
 
+	/// <summary>Returns the last day of the BS month that contains <paramref name="date"/>.</summary>
+	public DateTime GetMonthEnd(DateTime date) => ToNepali(date).MonthEndDate().EnglishDate;
+
+	/// <summary>Formats <paramref name="date"/> as a BS date, for example "Wednesday, Kartik 18, 2083".</summary>
+	public string GetLongDate(DateTime date) =>
+		ToNepali(date).ToLongDateString(leadingZeros: false, displayDayName: true, displayYear: true);
+
 	static NepaliDate ToNepali(DateTime date) => new(date.Date);
 
 	static int ToMonthIndex(int year, int month) => year * 12 + month - 1;

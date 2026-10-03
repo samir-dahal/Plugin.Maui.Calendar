@@ -98,6 +98,22 @@ public class NepaliCalendarSystemTests
 		act.Should().NotThrow();
 	}
 
+	[Fact]
+	public void GetMonthEnd_ShouldReturnLastDayOfTheBsMonth()
+	{
+		var monthEnd = calendarSystem.GetMonthEnd(newYear2083.AddDays(5));
+
+		calendarSystem.GetMonthName(monthEnd).Should().Be("Baishakh");
+		calendarSystem.GetMonthName(monthEnd.AddDays(1)).Should().Be("Jestha");
+	}
+
+	[Fact]
+	public void GetLongDate_ShouldIncludeWeekdayMonthDayAndYear()
+	{
+		// 4 November 2026 is Kartik 18, 2083.
+		calendarSystem.GetLongDate(new DateTime(2026, 11, 4)).Should().Be("Wednesday, Kartik 18, 2083");
+	}
+
 	[Theory]
 	[InlineData(1901, 2100)]
 	[InlineData(2000, 2199)]
