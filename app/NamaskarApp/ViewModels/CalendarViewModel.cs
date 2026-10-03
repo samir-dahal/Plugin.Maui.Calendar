@@ -33,6 +33,9 @@ public partial class CalendarViewModel : ObservableObject
 	/// <summary>The today screen shown over the calendar when the app starts.</summary>
 	public WelcomeViewModel Welcome { get; }
 
+	/// <summary>Nepal's weekend: Saturday only.</summary>
+	public IReadOnlyCollection<DayOfWeek> WeekendDays { get; } = [DayOfWeek.Saturday];
+
 	/// <summary>Today's background photo, or <see langword="null"/> for the plain flag-blue background.</summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(PhotoCredit))]

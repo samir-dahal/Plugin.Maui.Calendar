@@ -34,33 +34,39 @@
         <Color x:Key="Crimson">#C8102E</Color>
 
         <converters:RedDayConverter x:Key="RedDayConverter" />
+        <converters:EnglishDayLabelConverter x:Key="EnglishDayLabelConverter" />
 
         <Style x:Key="WeekdayTitleStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontSize" Value="12" />
             <Setter Property="FontFamily" Value="OpenSansSemibold" />
             <Setter Property="HorizontalTextAlignment" Value="Center" />
-            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Margin" Value="0,0,0,2" />
             <Setter Property="TextColor" Value="{StaticResource OnGlassMuted}" />
+        </Style>
+
+        <!-- Saturday, the Nepali weekend (Calendar.WeekendDays) -->
+        <Style x:Key="WeekendTitleStyle" TargetType="Label" BasedOn="{StaticResource WeekdayTitleStyle}">
+            <Setter Property="TextColor" Value="{StaticResource RedOnGlass}" />
         </Style>
 
         <Style x:Key="ChevronButtonStyle" TargetType="Button">
             <Setter Property="BackgroundColor" Value="Transparent" />
             <Setter Property="BorderWidth" Value="0" />
-            <Setter Property="FontSize" Value="28" />
-            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="FontSize" Value="26" />
+            <Setter Property="Padding" Value="10,0" />
             <Setter Property="TextColor" Value="{StaticResource OnPhoto}" />
         </Style>
 
         <Style x:Key="SectionTitleStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="17" />
+            <Setter Property="FontSize" Value="16" />
             <Setter Property="FontFamily" Value="OpenSansSemibold" />
-            <Setter Property="Margin" Value="0,8,0,4" />
+            <Setter Property="Margin" Value="0,4,0,2" />
             <Setter Property="TextColor" Value="{StaticResource OnGlass}" />
         </Style>
 
         <Style x:Key="BodyLabelStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="LineHeight" Value="1.2" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="LineHeight" Value="1.15" />
             <Setter Property="TextColor" Value="{StaticResource OnGlass}" />
         </Style>
     </ContentPage.Resources>
@@ -80,13 +86,28 @@
             </BoxView.Background>
         </BoxView>
 
-    <ScrollView x:Name="CalendarContent" IsVisible="False" Opacity="0">
-        <VerticalStackLayout Padding="16,24,16,32" Spacing="16">
+    <Grid x:Name="CalendarContent" IsVisible="False" Opacity="0" RowDefinitions="Auto,*">
 
-            <!-- Header: BS month and year, with the AD months it spans -->
-            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-                <VerticalStackLayout VerticalOptions="Center">
-                    <Label FontSize="30" FontFamily="OpenSansSemibold" LineBreakMode="NoWrap">
+            <!-- Header, pinned above the scrolling cards: BS month and year, with the AD months it spans.
+                 Drag it down (or tap the handle) to go back to the welcome screen. -->
+            <Grid Padding="16,6,16,8" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto,Auto" BackgroundColor="Transparent">
+                <Grid.GestureRecognizers>
+                    <PanGestureRecognizer PanUpdated="OnCalendarHeaderPanUpdated" />
+                </Grid.GestureRecognizers>
+                <BoxView Grid.ColumnSpan="4"
+                         WidthRequest="36"
+                         HeightRequest="4"
+                         CornerRadius="2"
+                         Margin="0,0,0,10"
+                         HorizontalOptions="Center"
+                         Color="{StaticResource OnPhotoMuted}"
+                         SemanticProperties.Description="Back to today">
+                    <BoxView.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding Welcome.ShowCommand}" />
+                    </BoxView.GestureRecognizers>
+                </BoxView>
+                <VerticalStackLayout Grid.Row="1" VerticalOptions="Center">
+                    <Label FontSize="24" FontFamily="OpenSansSemibold" LineBreakMode="NoWrap">
                         <Label.FormattedText>
                             <FormattedString>
                                 <Span Text="{Binding MonthName}" TextColor="{StaticResource OnPhoto}" />
@@ -95,35 +116,38 @@
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>
-                    <Label Text="{Binding EnglishMonthSpan}" FontSize="14" TextColor="{StaticResource OnPhotoMuted}" />
+                    <Label Text="{Binding EnglishMonthSpan}" FontSize="13" TextColor="{StaticResource OnPhotoMuted}" />
                 </VerticalStackLayout>
 
-                <Button Grid.Column="1"
+                <Button Grid.Row="1" Grid.Column="1"
                         Text="Today"
                         Command="{Binding GoToTodayCommand}"
-                        FontSize="14"
+                        FontSize="13"
                         FontFamily="OpenSansSemibold"
-                        Padding="14,0"
-                        HeightRequest="36"
-                        CornerRadius="18"
+                        Padding="12,0"
+                        HeightRequest="32"
+                        CornerRadius="16"
                         VerticalOptions="Center"
                         BackgroundColor="{StaticResource OnPhotoChip}"
                         TextColor="{StaticResource OnPhoto}"
                         SemanticProperties.Hint="Shows the current month and selects today" />
-                <Button Grid.Column="2"
+                <Button Grid.Row="1" Grid.Column="2"
                         Text="‹"
                         Command="{Binding PrevLayoutUnitCommand, Source={x:Reference NepaliCalendar}, x:DataType=plugin:Calendar}"
                         Style="{StaticResource ChevronButtonStyle}"
                         SemanticProperties.Description="Previous month" />
-                <Button Grid.Column="3"
+                <Button Grid.Row="1" Grid.Column="3"
                         Text="›"
                         Command="{Binding NextLayoutUnitCommand, Source={x:Reference NepaliCalendar}, x:DataType=plugin:Calendar}"
                         Style="{StaticResource ChevronButtonStyle}"
                         SemanticProperties.Description="Next month" />
             </Grid>
 
+    <ScrollView x:Name="CalendarScroll" Grid.Row="1">
+        <VerticalStackLayout Padding="16,4,16,32" Spacing="12">
+
             <!-- Month grid -->
-            <Border Padding="8,14,8,10"
+            <Border Padding="6,10,6,6"
                     Stroke="{StaticResource GlassStroke}"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 20"
@@ -140,9 +164,10 @@
                                  UseAbbreviatedDayNames="True"
                                  DaysTitleLabelFirstUpperRestLower="True"
                                  DaysTitleLabelStyle="{StaticResource WeekdayTitleStyle}"
-                                 WeekendTitleStyle="{StaticResource WeekdayTitleStyle}"
-                                 DayViewSize="46"
-                                 DayViewHeight="56">
+                                 WeekendTitleStyle="{StaticResource WeekendTitleStyle}"
+                                 WeekendDays="{Binding WeekendDays}"
+                                 DayViewSize="40"
+                                 DayViewHeight="44">
                     <plugin:Calendar.DayViewTemplate>
                         <!-- Wall-patro cell: large BS day, small AD day in the corner.
                              Cells are reused across months, so each property is driven by one trigger or binding
@@ -169,9 +194,10 @@
                                             <Setter Property="Opacity" Value="0.4" />
                                         </DataTrigger>
                                     </Grid.Triggers>
-                                    <Label Text="{Binding Date, StringFormat='{0:%d}'}"
-                                           FontSize="10"
-                                           Margin="0,3,5,0"
+                                    <!-- AD day; "Oct 1" marks where the AD month starts -->
+                                    <Label Text="{Binding Date, Converter={StaticResource EnglishDayLabelConverter}}"
+                                           FontSize="9"
+                                           Margin="0,2,4,0"
                                            HorizontalOptions="End"
                                            VerticalOptions="Start"
                                            TextColor="{StaticResource OnGlassMuted}">
@@ -183,9 +209,9 @@
                                     </Label>
                                     <!-- Unselected day number: crimson on Saturdays and public holidays -->
                                     <Label Text="{Binding Day}"
-                                           FontSize="21"
+                                           FontSize="17"
                                            FontFamily="OpenSansSemibold"
-                                           Margin="0,6,0,0"
+                                           Margin="0,5,0,0"
                                            HorizontalOptions="Center"
                                            VerticalOptions="Center"
                                            TextColor="{StaticResource OnGlass}">
@@ -201,9 +227,9 @@
                                     <!-- Selected day number -->
                                     <Label Text="{Binding Day}"
                                            IsVisible="{Binding IsSelected}"
-                                           FontSize="21"
+                                           FontSize="17"
                                            FontFamily="OpenSansSemibold"
-                                           Margin="0,6,0,0"
+                                           Margin="0,5,0,0"
                                            HorizontalOptions="Center"
                                            VerticalOptions="Center"
                                            TextColor="White" />
@@ -215,7 +241,8 @@
             </Border>
 
             <!-- Selected day -->
-            <Border Padding="16,14,16,16"
+            <Border x:Name="SelectedDayCard"
+                    Padding="16,12,16,14"
                     Stroke="{StaticResource GlassStroke}"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 20"
@@ -223,11 +250,11 @@
             <VerticalStackLayout Spacing="6">
                 <VerticalStackLayout Spacing="2">
                     <Label Text="{Binding SelectedNepaliDate}"
-                           FontSize="20"
+                           FontSize="18"
                            FontFamily="OpenSansSemibold"
                            TextColor="{StaticResource OnGlass}" />
                     <Label Text="{Binding SelectedEnglishDate}"
-                           FontSize="15"
+                           FontSize="14"
                            TextColor="{StaticResource OnGlassMuted}" />
                 </VerticalStackLayout>
 
@@ -319,6 +346,7 @@
 
         </VerticalStackLayout>
     </ScrollView>
+    </Grid>
 
         <!-- Welcome: today at a glance on the clean photo; tap or drag up to open the calendar -->
         <Grid x:Name="WelcomeLayer"

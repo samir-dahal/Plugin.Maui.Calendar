@@ -63,7 +63,7 @@ public partial class WelcomeViewModel : ObservableObject
 	[NotifyCanExecuteChangedFor(nameof(SaveNameCommand))]
 	public partial string NameInput { get; set; } = string.Empty;
 
-	/// <summary>False once the person has opened the calendar.</summary>
+	/// <summary>False while the calendar is open.</summary>
 	[ObservableProperty]
 	public partial bool IsVisible { get; private set; } = true;
 
@@ -82,6 +82,10 @@ public partial class WelcomeViewModel : ObservableObject
 
 	[RelayCommand]
 	void OpenCalendar() => IsVisible = false;
+
+	/// <summary>Brings the welcome screen back over the calendar.</summary>
+	[RelayCommand]
+	void Show() => IsVisible = true;
 
 	void CloseNamePrompt()
 	{
