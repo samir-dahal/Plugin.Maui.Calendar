@@ -9,13 +9,17 @@
              x:Class="NamaskarApp.MainPage"
              x:DataType="vm:CalendarViewModel"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="{AppThemeBinding Light={StaticResource PageLight}, Dark={StaticResource PageDark}}">
+             BackgroundColor="{AppThemeBinding Light={StaticResource SkyLight}, Dark={StaticResource SkyDark}}">
 
     <ContentPage.Resources>
         <!-- Palette: Nepal flag blue for the shown month and selection, rhododendron crimson for Saturdays and
              public holidays (printed red on wall patros). -->
-        <Color x:Key="PageLight">#F3F5F9</Color>
-        <Color x:Key="PageDark">#0E1420</Color>
+        <!-- Sky: shown behind the daily photo, and on its own when there is no photo -->
+        <Color x:Key="SkyLight">#003893</Color>
+        <Color x:Key="SkyDark">#0A1F4D</Color>
+        <Color x:Key="OnPhoto">#FFFFFF</Color>
+        <Color x:Key="OnPhotoMuted">#D9FFFFFF</Color>
+        <Color x:Key="OnPhotoChip">#33FFFFFF</Color>
         <Color x:Key="PaperLight">#FFFFFF</Color>
         <Color x:Key="PaperDark">#18202F</Color>
         <Color x:Key="InkLight">#1A2233</Color>
@@ -46,7 +50,7 @@
             <Setter Property="BorderWidth" Value="0" />
             <Setter Property="FontSize" Value="28" />
             <Setter Property="Padding" Value="12,0" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}" />
+            <Setter Property="TextColor" Value="{StaticResource OnPhoto}" />
         </Style>
 
         <Style x:Key="SectionTitleStyle" TargetType="Label">
@@ -63,6 +67,19 @@
         </Style>
     </ContentPage.Resources>
 
+    <Grid>
+        <!-- Daily photo as a skin: it never sits directly behind dates, which stay on opaque cards -->
+        <Image Source="{Binding Background.ImageUrl}" Aspect="AspectFill" />
+        <BoxView>
+            <BoxView.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#8C000000" Offset="0" />
+                    <GradientStop Color="#33000000" Offset="0.35" />
+                    <GradientStop Color="#99000000" Offset="1" />
+                </LinearGradientBrush>
+            </BoxView.Background>
+        </BoxView>
+
     <ScrollView>
         <VerticalStackLayout Padding="16,24,16,32" Spacing="16">
 
@@ -72,18 +89,13 @@
                     <Label FontSize="30" FontFamily="OpenSansSemibold" LineBreakMode="NoWrap">
                         <Label.FormattedText>
                             <FormattedString>
-                                <Span Text="{Binding MonthName}"
-                                      TextColor="{AppThemeBinding Light={StaticResource FlagBlueLight}, Dark={StaticResource FlagBlueDark}}" />
+                                <Span Text="{Binding MonthName}" TextColor="{StaticResource OnPhoto}" />
                                 <Span Text=" " />
-                                <Span Text="{Binding Year}"
-                                      FontFamily="OpenSansRegular"
-                                      TextColor="{AppThemeBinding Light={StaticResource InkLight}, Dark={StaticResource InkDark}}" />
+                                <Span Text="{Binding Year}" FontFamily="OpenSansRegular" TextColor="{StaticResource OnPhoto}" />
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>
-                    <Label Text="{Binding EnglishMonthSpan}"
-                           FontSize="14"
-                           TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                    <Label Text="{Binding EnglishMonthSpan}" FontSize="14" TextColor="{StaticResource OnPhotoMuted}" />
                 </VerticalStackLayout>
 
                 <Button Grid.Column="1"
@@ -95,8 +107,8 @@
                         HeightRequest="36"
                         CornerRadius="18"
                         VerticalOptions="Center"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource TodayLight}, Dark={StaticResource TodayDark}}"
-                        TextColor="{AppThemeBinding Light={StaticResource FlagBlueLight}, Dark={StaticResource FlagBlueDark}}"
+                        BackgroundColor="{StaticResource OnPhotoChip}"
+                        TextColor="{StaticResource OnPhoto}"
                         SemanticProperties.Hint="Shows the current month and selects today" />
                 <Button Grid.Column="2"
                         Text="‹"
@@ -202,7 +214,11 @@
             </Border>
 
             <!-- Selected day -->
-            <VerticalStackLayout Padding="4,0" Spacing="6">
+            <Border Padding="16,14,16,16"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 20"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource PaperLight}, Dark={StaticResource PaperDark}}">
+            <VerticalStackLayout Spacing="6">
                 <VerticalStackLayout Spacing="2">
                     <Label Text="{Binding SelectedNepaliDate}"
                            FontSize="20"
@@ -249,6 +265,7 @@
                     </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
             </VerticalStackLayout>
+            </Border>
 
             <!-- Holidays of the shown month, as printed at the foot of a wall patro -->
             <Border Padding="16,12,16,16"
@@ -285,7 +302,20 @@
                 </VerticalStackLayout>
             </Border>
 
+            <!-- Photo credit; opens the photographer's page -->
+            <Label Text="{Binding PhotoCredit}"
+                   IsVisible="{Binding PhotoCredit, Converter={x:Static converters:StringHasTextConverter.Instance}}"
+                   FontSize="12"
+                   HorizontalOptions="Center"
+                   TextColor="{StaticResource OnPhotoMuted}"
+                   SemanticProperties.Hint="Opens the photographer's page">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding OpenPhotoSourceCommand}" />
+                </Label.GestureRecognizers>
+            </Label>
+
         </VerticalStackLayout>
     </ScrollView>
+    </Grid>
 
 </ContentPage>

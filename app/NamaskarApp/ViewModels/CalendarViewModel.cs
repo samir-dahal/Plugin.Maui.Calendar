@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NamaskarApp.Models;
+using NamaskarApp.Services;
 using Plugin.Maui.Calendar.Interfaces;
 using Plugin.Maui.Calendar.Nepali;
 
@@ -9,15 +10,43 @@ namespace NamaskarApp.ViewModels;
 public partial class CalendarViewModel : ObservableObject
 {
 	readonly NepaliCalendarSystem calendarSystem;
+	readonly DailyBackgroundService backgroundService;
+	readonly IBrowser browser;
 
-	public CalendarViewModel(NepaliCalendarSystem calendarSystem)
+	public CalendarViewModel(NepaliCalendarSystem calendarSystem, DailyBackgroundService backgroundService, IBrowser browser)
 	{
 		this.calendarSystem = calendarSystem;
+		this.backgroundService = backgroundService;
+		this.browser = browser;
 		UpdateMonth();
 		UpdateSelectedDay();
+		Background = backgroundService.GetCached();
 	}
 
 	public ICalendarSystem CalendarSystem => calendarSystem;
+
+	/// <summary>Today's background photo, or <see langword="null"/> for the plain flag-blue background.</summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(PhotoCredit))]
+	public partial DailyBackground? Background { get; private set; }
+
+	public string PhotoCredit => Background is { Photographer.Length: > 0 } background
+		? $"Photo by {background.Photographer} on {background.Source}"
+		: string.Empty;
+
+	public async Task LoadBackgroundAsync(int screenWidthPx)
+	{
+		// Keep the cached photo when the API cannot be reached.
+		if (await backgroundService.FetchAsync(screenWidthPx) is { } background)
+		{
+			Background = background;
+		}
+	}
+
+	[RelayCommand]
+	Task OpenPhotoSource() => Background is { SourceUrl.Length: > 0 } background
+		? browser.OpenAsync(background.SourceUrl, BrowserLaunchMode.SystemPreferred)
+		: Task.CompletedTask;
 
 	[ObservableProperty]
 	public partial DateTime ShownDate { get; set; } = DateTime.Today;
@@ -103,7 +132,8 @@ public partial class CalendarViewModel : ObservableObject
 			var info = NepaliDayInfo.For(date);
 			if (info.IsPublicHoliday)
 			{
-				holidays.Add(new MonthHoliday(calendarSystem.GetDayOfMonth(date), string.Join(", ", info.Events)));
+				var names = info.Events.Where(name => !NepaliEventNames.IsInternationalObservance(name)).ToList();
+				holidays.Add(new MonthHoliday(calendarSystem.GetDayOfMonth(date), string.Join(", ", names.Count > 0 ? names : info.Events)));
 			}
 		}
 		return holidays;
