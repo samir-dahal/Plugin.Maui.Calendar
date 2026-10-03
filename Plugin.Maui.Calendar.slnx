@@ -2,7 +2,12 @@
   <Folder Name="/samples/">
     <Project Path="samples/SampleApp/SampleApp.csproj" />
   </Folder>
-  <Folder Name="/src/" />
+  <Folder Name="/src/">
+    <Project Path="src/Plugin.Maui.Calendar.Nepali/Plugin.Maui.Calendar.Nepali.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Plugin.Maui.Calendar.Nepali.Tests/Plugin.Maui.Calendar.Nepali.Tests.csproj" />
+  </Folder>
   <Project Path="src/Plugin.Maui.Calendar/Plugin.Maui.Calendar.csproj" />
   <Project Path="tests/Plugin.Maui.Calendar.Tests/Plugin.Maui.Calendar.Tests.csproj" />
 </Solution>
